@@ -8,12 +8,13 @@ default_font_name = os.path.join("..", default_font_name)
 
 class Text:
     def __init__(self, text, pos, animate=False,  font=default_font_name):
-        self.size = 50
+        self.size = 40
 
         self.text = str(text)
-        self.font = pygame.font.Font(font, self.size)
+        self.font_name = font
+        self.font = pygame.font.Font(self.font_name, self.size)
 
-        self.color = (0, 0, 0)
+        self.color = (255, 255, 255)
         self.image = self.font.render(self.text, True, self.color)
         self.rect = self.image.get_rect()
         self.rect.center = pos
@@ -21,6 +22,7 @@ class Text:
 
         # for animation
         self.animate = animate
+        self.is_animated = False
         self.last_update = pygame.time.get_ticks()
         self.count = 0
         self.new_text = ""
@@ -38,16 +40,15 @@ class Text:
 
             self.count += 1
 
-    def update(self, text=None):
-        if text:
-            self.text = text
+            if self.count == len(self.text):
+                self.is_animated = True
 
+    def update(self):
+        self.font = pygame.font.Font(self.font_name, self.size)
         if self.animate:
-            self.create_animation(50)
+            self.create_animation(100)
 
-        self.image = self.font.render(self.text, True, self.color)
-
-    def draw(self, text=None):
-        self.update(text)
+    def draw(self):
+        self.update()
         self.surf.blit(self.image, self.rect)
 
