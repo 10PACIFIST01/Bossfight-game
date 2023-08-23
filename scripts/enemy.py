@@ -16,6 +16,7 @@ class Enemy(Entity):
 
         self.can_walk = True
         self.is_push = False
+        self.spawned = True
         self.walk_cooldown = 400
         self.last_step = pygame.time.get_ticks()
         self.impulse = 2
@@ -28,6 +29,7 @@ class Enemy(Entity):
         self.damage = 20
         self.spike_body = True
         self.die_alpha = 0
+        self.spawn_alpha = 0
 
         enemy_sprites.add(self)
 
@@ -46,6 +48,8 @@ class Enemy(Entity):
         if self.direction.x == 0 and self.on_ground:
             self.stay()
 
+
+    # make enemy's behavior
     def action(self):
         self.distance = self.get_player_distance(self, self.player)
         if self.distance <= self.vis_radius:
@@ -69,7 +73,7 @@ class Enemy(Entity):
         if self.hitbox.colliderect(self.player.attack_box) and self.player.can_damage():
             if self.can_be_attacked:
                 self.get_hit(self.player)
-                self.player.heal_points += 10
+                self.player.heal_points += 5
 
         #self.hitbox = camera.apply(self.hitbox)
 
@@ -104,9 +108,17 @@ class Enemy(Entity):
             if self.die_alpha >= 255:
                 self.is_dead = True
 
+    def show(self):
+        pass
+
+
     def update(self, camera):
+        self.camera = camera
+
+        if not self.spawned:
+            self.show()
         self.action()
         self.move()
-        self.check_all(camera)
+        self.check_all()
         self.normalize_hitbox()
         # self.draw_health_bar(self.screen, (self.hitbox.centerx - 75, self.hitbox.top - 20), self.health)
