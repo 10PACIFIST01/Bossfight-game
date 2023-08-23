@@ -12,7 +12,7 @@ class Background():
         self.trees_list = []
         self.background_anim = load_animation(11, "background", "background", 9, ".jpg")
         for i in range(len(self.background_anim)):
-            self.background_anim[i] = pygame.transform.scale(self.background_anim[i], (self.background_anim[i].get_width(), SCREEN_SIZE[1] - 150))
+            self.background_anim[i] = pygame.transform.scale(self.background_anim[i], (self.background_anim[i].get_width() * 0.7, SCREEN_SIZE[1] - 150))
         self.background_image = self.background_anim[0]
         self.background_rect = self.background_image.get_rect()
         self.screen = screen
@@ -109,10 +109,10 @@ class Background():
 
         target.x += player.direction.x * speedX
 
-        #if target.right <= self.map_width:
-        #    target.right = self.map_width
-        #if target.left >= 0:
-        #    target.left = 0
+        # if target.right < self.map_width:
+        #     target.right = self.map_width
+        # if target.left > 0:
+        #     target.left = 0
 
     def update(self, player):
         self.play_animation(11, self.background_anim, self.framerate)

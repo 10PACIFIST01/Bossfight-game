@@ -31,6 +31,7 @@ class Entity(pygame.sprite.Sprite):
         self.count = 0
         self.last_update = pygame.time.get_ticks()
         self.last_hit = pygame.time.get_ticks()
+        self.current_time = pygame.time.get_ticks()
 
         self.invisibility_cooldown = 250
         self.can_be_attacked = True
@@ -46,6 +47,9 @@ class Entity(pygame.sprite.Sprite):
         self.can_move = True
         self.is_invincible = False
         self.is_dead = False
+        self.is_pushable = True
+        self.is_massive = True
+        self.is_collision = False
 
         all_sprites.add(self)
 
@@ -57,25 +61,32 @@ class Entity(pygame.sprite.Sprite):
     def move(self):
         if self.can_move:
             self.hitbox.x += self.direction.x * self.speedX
+            self.check_collisions(self.direction.x, 0)
+
             self.hitbox.y += self.direction.y * self.speedY
+            self.check_collisions(0, -self.speedY)
 
     def get_hit(self, entity):
         self.health -= entity.damage
 
-        self.speedY = 4
-        self.direction.y = -1
-        self.speedX = -20
-        self.is_push = True
+        if self.is_pushable:
+            self.speedY = 4
+            self.direction.y = -1
+            self.speedX = -20
+            self.is_push = True
 
         self.can_be_attacked = False
         self.last_hit = self.current_time
 
     def check_gravity(self):
-        if not self.on_ground:
-            self.direction.y = -1
-            self.speedY -= self.gravity
-        else:
-            self.direction.y = 0
+        # if not self.on_ground:
+        #     self.direction.y = -1
+        #     self.speedY -= self.gravity
+        # else:
+        #     self.direction.y = 0
+
+        self.speedY -= self.gravity
+        self.direction.y = -1
 
     def check_push(self):
         if self.is_push:
@@ -96,13 +107,32 @@ class Entity(pygame.sprite.Sprite):
             self.hitbox.right = self.field_size[0]
         if self.hitbox.left <= 0:
             self.hitbox.left = 0
-        if self.hitbox.bottom >= self.field_size[1] * 0.9:
+        if self.hitbox.bottom >= self.field_size[1] * 0.9 and self.is_massive:
             self.hitbox.bottom = self.field_size[1] * 0.9
             self.on_ground = True
-        else:
-            self.on_ground = False
+            #self.speedY = 0
 
         self.rect.center = self.hitbox.center
+
+    def check_collisions(self, x_vel, y_vel):
+        for border in border_sprites:
+            if self.hitbox.colliderect(border.rect):
+                # if x_vel > 0:
+                #     self.hitbox.right = border.rect.left
+
+                # if x_vel < 0:
+                #     self.hitbox.left = border.rect.right
+
+                if y_vel > 0 and self.hitbox.bottom - 20 <= border.rect.top:
+                    self.hitbox.bottom = border.rect.top
+                    self.speedY = 0
+                    self.on_ground = True
+
+                # if y_vel < 0:
+                #     self.hitbox.top = border.rect.bottom
+                #     self.speedY = 0
+
+                self.is_collision = True
 
 
     def check_cooldowns(self):
@@ -133,12 +163,11 @@ class Entity(pygame.sprite.Sprite):
             else:
                 return True
 
-    def check_all(self, camera):
-        self.camera = camera
+    def check_all(self):
 
         self.check_cooldowns()
         self.check_state()
-        self.check_gravity()
+        self.check_gravity() if self.is_massive else 0
         self.check_collide()
         self.check_health()
         self.check_push()

@@ -16,12 +16,13 @@ class Player(Entity):
         self.speedX = 10
         self.MAX_SPEEDX = self.speedX
 
-        self.attack_box = self.rect.inflate(30, 0)
+        self.attack_box = self.rect.inflate(60, 0)
         self.damage = 30
         self.health = 500
         self.MAX_HEALTH = self.health
         self.impulse = 2
         self.invisibility_cooldown = 1000
+        self.death_time = 0
 
         health_image_folder = os.path.join(load_img_folder("UI", False), "health_bar.png")
         self.health_bar_image = pygame.image.load(health_image_folder)
@@ -59,6 +60,7 @@ class Player(Entity):
         self.can_attack = True
         self.is_magic = False
         self.can_magic = True
+        self.is_restart = False
 
         self.mana = 50
         self.MAX_MANA = 100
@@ -86,7 +88,7 @@ class Player(Entity):
             self.on_ground = False
             self.is_attack = False
             self.direction.y = -1
-            self.speedY = 17
+            self.speedY = 20
             self.MAX_SPEEDY = self.speedY
 
     def check_gravity(self):
@@ -118,7 +120,7 @@ class Player(Entity):
 
         if self.mana > self.mana_cost:
             self.mana -= self.mana_cost
-            magic = Magic(self.side, "magic_ball", self.hitbox.center)
+            magic = Magic(self.side, "magic_ball", (self.rect.center[0] + 100, self.rect.center[1]))
 
     def heal(self):
         self.health = self.MAX_HEALTH
@@ -202,8 +204,15 @@ class Player(Entity):
 
         if self.joystick.get_button(0):
             self.jump()
+
+        if self.joystick.get_button(3) and self.heal_points == self.MAX_HEAL_POINTS:
+            self.heal()
+
         if self.joystick.get_button(6):
             pygame.quit()
+
+        if self.joystick.get_button(4):
+            self.is_restart = True
 
     def check_cooldowns(self):
         Entity.check_cooldowns(self)
@@ -248,7 +257,7 @@ class Player(Entity):
 
         for bullet in self.bullets:
             if bullet.hitbox.colliderect(self.hitbox):
-                if self.can_be_attacked:
+                if self.can_be_attacked and bullet.spike_body:
                     self.get_hit(bullet)
 
 
@@ -304,6 +313,7 @@ class Player(Entity):
             self.image = pygame.transform.flip(self.image, self.side == "left", 0)
         else:
             self.is_dead = not self.play_animation(9, self.death_anim, 100, is_loop=False)
+            self.death_time = pygame.time.get_ticks()
 
     def get_hit(self, entity):
         if not self.is_invincible:
@@ -311,7 +321,9 @@ class Player(Entity):
             Entity.get_hit(self, entity)
 
     def update(self, camera):
+        self.camera = camera
+
         self.move()
-        self.check_all(camera)
+        self.check_all()
         self.normalize_hitbox()
         self.draw_health_bar(self.screen, (110, self.field_size[1] - 45), self.health, self.mana)
